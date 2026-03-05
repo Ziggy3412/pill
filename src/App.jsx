@@ -2,32 +2,30 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import SideBar from "./SideBar.jsx";
+import AddChart from "./AddChart.jsx";
+import ChartChart from "./ChartChart.jsx";
+import PopupChart from "./PopupChart.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
+const[isPopupOpen, setIsPopupOpen] = useState(false);
+function handleClick() {
+    setIsPopupOpen(true);
+}
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>pill</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 100000000000000000000000000000000000000000000000000000000000)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+        <div className="h-full flex">
+            <SideBar />
+
+            <main className="flex-1 relative">
+                <AddChart HandleClick={handleClick} />
+
+                <ChartChart />
+            </main>
+        </div>
+
+        {isPopupOpen && <PopupChart /> }
+
     </>
   )
 }
