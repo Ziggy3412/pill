@@ -10,6 +10,18 @@ import PopupChart from "./PopupChart.jsx";
 function App() {
     const[isPopupOpen, setIsPopupOpen] = useState(false);
 
+    const [pills, setPills] = useState([]);
+
+    /*
+        name: string
+        medication: string
+        dosage: integer
+        time: string? (tentative)
+        urgency: string
+        if its been taken: (tentative)
+        notes: string
+    */
+
       return (
         <>
             <div className="h-full flex">

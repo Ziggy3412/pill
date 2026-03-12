@@ -1,6 +1,7 @@
-
+import { useState } from 'react';
 
 function PopupChart({ changePopupState }) {
+    const [pillTimeEntries, setPillTimeEntries] = useState(0);
 
     function handleCloseButton() {
         changePopupState(false);
@@ -70,10 +71,13 @@ function PopupChart({ changePopupState }) {
                                 type="button"
                                 id="add-time-btn"
                                 className="inline-flex items-center gap-1 rounded border border-primary bg-primary px-2 py-1 text-[11px] text-blue-600 hover:bg-primary-dark"
+                                onClick={() => setPillTimeEntries(pillTimeEntries + 1)}
                             >
                                 + Add time
                             </button>
                         </div>
+
+                        {// add input fields for hours and minutes here for your homework, purely presentational UI, don't worry about click functionality yet}
 
                         <datalist id="hh-list">
                             <option value="1"></option>
