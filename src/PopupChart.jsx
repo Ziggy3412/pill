@@ -77,7 +77,31 @@ function PopupChart({ changePopupState }) {
                             </button>
                         </div>
 
-                        {/* add input fields for hours and minutes here for your homework, purely presentational UI, don't worry about click functionality yet */}
+                        <div id="time-inputs" className="mt-2 space-y-2">
+                            {Array.from({ length: pillTimeEntries + 1 }, (_, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                    <div className="w-25 shrink-0">
+                                        <label className="sr-only">Hours</label>
+                                        <input
+                                            type="text"
+                                            list="hh-list"
+                                            placeholder="Hour"
+                                            className="block w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <span className="text-slate-400 text-xs">:</span>
+                                    <div className="w-25 shrink-0">
+                                        <label className="sr-only">Minutes</label>
+                                        <input
+                                            type="text"
+                                            list="mm-list"
+                                            placeholder="Min"
+                                            className="block w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
 
                         <datalist id="hh-list">
                             <option value="1"></option>
@@ -95,10 +119,10 @@ function PopupChart({ changePopupState }) {
                         </datalist>
 
                         <datalist id="mm-list">
-                            <option value="00"></option>
+                            {Array.from({ length: 60 }, (_, i) => (
+                                <option key={i} value={i.toString().padStart(2, '0')} />
+                            ))}
                         </datalist>
-
-                        <div id="time-inputs" className="mt-2 space-y-2"></div>
                     </div>
 
                     <div className="md:col-span-2">
