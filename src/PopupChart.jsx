@@ -1,4 +1,89 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+
+const HOUR_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
+function filterHourOptions(value) {
+    if (!value) return HOUR_OPTIONS;
+    return HOUR_OPTIONS.filter((opt) => opt.startsWith(value));
+}
+
+function filterMinuteOptions(value) {
+    if (!value) return MINUTE_OPTIONS;
+    return MINUTE_OPTIONS.filter(
+        (opt) => opt.startsWith(value) || (value.length === 1 && opt === '0' + value)
+    );
+}
+
+function TimeDropdown({ name, placeholder, options, filterOptions, value, onChange, inputClassName }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [openUp, setOpenUp] = useState(false);
+    const containerRef = useRef(null);
+    const listRef = useRef(null);
+
+    const filtered = filterOptions(value);
+
+    useEffect(() => {
+        if (!isOpen || !containerRef.current || !listRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const listHeight = listRef.current.getBoundingClientRect().height;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        setOpenUp(spaceBelow < listHeight && rect.top > spaceBelow);
+    }, [isOpen, filtered.length]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        function handleClickOutside(e) {
+            if (containerRef.current && !containerRef.current.contains(e.target)) setIsOpen(false);
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div ref={containerRef} className="relative">
+            <input
+                type="text"
+                name={name}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                onFocus={() => setIsOpen(true)}
+                onClick={() => setIsOpen(true)}
+                placeholder={placeholder}
+                autoComplete="off"
+                className={inputClassName}
+            />
+            {isOpen && (
+                <ul
+                    ref={listRef}
+                    className={`absolute left-0 right-0 z-50 max-h-32 overflow-auto rounded border border-slate-300 bg-white py-0.5 shadow-lg text-xs ${
+                        openUp ? 'bottom-full mb-1' : 'top-full mt-1'
+                    }`}
+                    style={{ minWidth: 'var(--input-width, 5rem)' }}
+                >
+                    {filtered.length ? (
+                        filtered.map((opt) => (
+                            <li key={opt}>
+                                <button
+                                    type="button"
+                                    className="w-full px-2.5 py-1.5 text-left text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                                    onClick={() => {
+                                        onChange(opt);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    {opt}
+                                </button>
+                            </li>
+                        ))
+                    ) : (
+                        <li className="px-2.5 py-1.5 text-slate-500">No match</li>
+                    )}
+                </ul>
+            )}
+        </div>
+    );
+}
 
 function PopupChart({ changePopupState }) {
     const [pillTimeEntries, setPillTimeEntries] = useState(0);
@@ -6,6 +91,7 @@ function PopupChart({ changePopupState }) {
     const [urgencyError, setUrgencyError] = useState('');
     const [dosageError, setDosageError] = useState('');
     const [timeError, setTimeError] = useState('');
+    const [timeValues, setTimeValues] = useState({});
 
     function getStarColor(starIndex) {
         if (starIndex <= 2) return '#22c55e'; // green
@@ -26,8 +112,8 @@ function PopupChart({ changePopupState }) {
         const form = e.target;
         const dosage = form.elements['dosage']?.value?.trim();
         const hasValidTime = Array.from({ length: pillTimeEntries + 1 }, (_, i) => {
-            const hour = form.elements[`time-hour-${i}`]?.value?.trim();
-            const min = form.elements[`time-min-${i}`]?.value?.trim();
+            const hour = timeValues[`time-hour-${i}`]?.trim();
+            const min = timeValues[`time-min-${i}`]?.trim();
             return hour && min;
         }).some(Boolean);
 
@@ -48,13 +134,29 @@ function PopupChart({ changePopupState }) {
         changePopupState(false);
     }
 
+    function removeTimeEntry(index) {
+        const total = pillTimeEntries + 1;
+        if (total <= 1) return;
+        setPillTimeEntries((n) => n - 1);
+        setTimeValues((prev) => {
+            const next = { ...prev };
+            for (let j = index; j < total - 1; j++) {
+                next[`time-hour-${j}`] = prev[`time-hour-${j + 1}`] ?? '';
+                next[`time-min-${j}`] = prev[`time-min-${j + 1}`] ?? '';
+            }
+            delete next[`time-hour-${total - 1}`];
+            delete next[`time-min-${total - 1}`];
+            return next;
+        });
+    }
+
     return (
         <div
         id="add-modal"
         className=" fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4"
     >
-        <div className="w-full max-w-2xl rounded-xl bg-white border border-slate-200 shadow-lg">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+        <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white border border-slate-200 shadow-lg">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 p-4">
                 <h2 className="text-sm font-semibold text-primary-dark" id="modal-title">Add</h2>
                 <button
                     id="close-add-modal"
@@ -66,7 +168,7 @@ function PopupChart({ changePopupState }) {
                 </button>
             </div>
 
-            <div className="p-4">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
                 <form id="pill-form" className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={handleSubmit}>
                     <div>
                         <label className="block text-[11px] font-medium text-slate-700">Name</label>
@@ -146,54 +248,47 @@ function PopupChart({ changePopupState }) {
                         <div id="time-inputs" className="mt-2 space-y-2">
                             {Array.from({ length: pillTimeEntries + 1 }, (_, i) => (
                                 <div key={i} className="flex items-center gap-2">
-                                    <div className="w-25 shrink-0">
+                                    <div className="w-20 shrink-0">
                                         <label className="sr-only">Hours</label>
-                                        <input
+                                        <TimeDropdown
                                             name={`time-hour-${i}`}
-                                            type="text"
-                                            list="hh-list"
                                             placeholder="Hour"
-                                            className="block w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                            options={HOUR_OPTIONS}
+                                            filterOptions={filterHourOptions}
+                                            value={timeValues[`time-hour-${i}`] ?? ''}
+                                            onChange={(v) => setTimeValues((prev) => ({ ...prev, [`time-hour-${i}`]: v }))}
+                                            inputClassName="block w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
                                     <span className="text-slate-400 text-xs">:</span>
-                                    <div className="w-25 shrink-0">
+                                    <div className="w-20 shrink-0">
                                         <label className="sr-only">Minutes</label>
-                                        <input
+                                        <TimeDropdown
                                             name={`time-min-${i}`}
-                                            type="text"
-                                            list="mm-list"
                                             placeholder="Min"
-                                            className="block w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                            options={MINUTE_OPTIONS}
+                                            filterOptions={filterMinuteOptions}
+                                            value={timeValues[`time-min-${i}`] ?? ''}
+                                            onChange={(v) => setTimeValues((prev) => ({ ...prev, [`time-min-${i}`]: v }))}
+                                            inputClassName="block w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
+                                    {pillTimeEntries > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeTimeEntry(i)}
+                                            className="shrink-0 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary"
+                                            aria-label={`Remove time ${i + 1}`}
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>
                         {timeError && (
                             <p className="mt-1 text-[11px] text-red-600" role="alert">{timeError}</p>
                         )}
-
-                        <datalist id="hh-list">
-                            <option value="1"></option>
-                            <option value="2"></option>
-                            <option value="3"></option>
-                            <option value="4"></option>
-                            <option value="5"></option>
-                            <option value="6"></option>
-                            <option value="7"></option>
-                            <option value="8"></option>
-                            <option value="9"></option>
-                            <option value="10"></option>
-                            <option value="11"></option>
-                            <option value="12"></option>
-                        </datalist>
-
-                        <datalist id="mm-list">
-                            {Array.from({ length: 60 }, (_, i) => (
-                                <option key={i} value={i.toString().padStart(2, '0')} />
-                            ))}
-                        </datalist>
                     </div>
 
                     <div className="md:col-span-2">
