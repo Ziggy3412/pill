@@ -2,8 +2,49 @@ import { useState } from 'react';
 
 function PopupChart({ changePopupState }) {
     const [pillTimeEntries, setPillTimeEntries] = useState(0);
+    const [urgency, setUrgency] = useState(0);
+    const [urgencyError, setUrgencyError] = useState('');
+    const [dosageError, setDosageError] = useState('');
+    const [timeError, setTimeError] = useState('');
+
+    function getStarColor(starIndex) {
+        if (starIndex <= 2) return '#22c55e'; // green
+        if (starIndex === 3) return '#eab308'; // yellow
+        return '#ef4444'; // red (4 and 5)
+    }
 
     function handleCloseButton() {
+        changePopupState(false);
+    }
+
+    function handleSubmit(e) {
+        e.preventDefault();
+        setUrgencyError('');
+        setDosageError('');
+        setTimeError('');
+
+        const form = e.target;
+        const dosage = form.elements['dosage']?.value?.trim();
+        const hasValidTime = Array.from({ length: pillTimeEntries + 1 }, (_, i) => {
+            const hour = form.elements[`time-hour-${i}`]?.value?.trim();
+            const min = form.elements[`time-min-${i}`]?.value?.trim();
+            return hour && min;
+        }).some(Boolean);
+
+        if (urgency === 0) {
+            setUrgencyError('Please choose an urgency (1–5 stars) before saving.');
+            return;
+        }
+        if (!dosage) {
+            setDosageError('Dosage is required.');
+            return;
+        }
+        if (!hasValidTime) {
+            setTimeError('Please add at least one time (hour and minute).');
+            return;
+        }
+
+        // All required fields valid; close popup (add save logic here if needed)
         changePopupState(false);
     }
 
@@ -26,7 +67,7 @@ function PopupChart({ changePopupState }) {
             </div>
 
             <div className="p-4">
-                <form id="pill-form" className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <form id="pill-form" className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={handleSubmit}>
                     <div>
                         <label className="block text-[11px] font-medium text-slate-700">Name</label>
                         <input
@@ -51,17 +92,42 @@ function PopupChart({ changePopupState }) {
                         <label className="block text-[11px] font-medium text-slate-700">Dosage</label>
                         <input
                             id="dosage"
+                            name="dosage"
                             type="text"
+                            required
                             className="mt-1 block w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         />
+                        {dosageError && (
+                            <p className="mt-1 text-[11px] text-red-600" role="alert">{dosageError}</p>
+                        )}
                     </div>
 
                     <div>
                         <label className="block text-[11px] font-medium text-slate-700">Urgency</label>
-                        <div className="mt-1 flex items-center gap-2">
-                            <div id="urgency-input" className="flex items-center gap-1"></div>
-                            <div className="text-[11px] text-slate-500" id="urgency-label">3</div>
+                        <div className="mt-1 flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((value) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    className="p-0.5 rounded hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                                    onClick={() => { setUrgency(value); setUrgencyError(''); }}
+                                    aria-label={`Set urgency to ${value}`}
+                                >
+                                    {urgency >= value ? (
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill={getStarColor(value)} aria-hidden>
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinejoin="round" aria-hidden>
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                        </svg>
+                                    )}
+                                </button>
+                            ))}
                         </div>
+                        {urgencyError && (
+                            <p className="mt-1 text-[11px] text-red-600" role="alert">{urgencyError}</p>
+                        )}
                     </div>
 
                     <div className="md:col-span-2">
@@ -83,6 +149,7 @@ function PopupChart({ changePopupState }) {
                                     <div className="w-25 shrink-0">
                                         <label className="sr-only">Hours</label>
                                         <input
+                                            name={`time-hour-${i}`}
                                             type="text"
                                             list="hh-list"
                                             placeholder="Hour"
@@ -93,6 +160,7 @@ function PopupChart({ changePopupState }) {
                                     <div className="w-25 shrink-0">
                                         <label className="sr-only">Minutes</label>
                                         <input
+                                            name={`time-min-${i}`}
                                             type="text"
                                             list="mm-list"
                                             placeholder="Min"
@@ -102,6 +170,9 @@ function PopupChart({ changePopupState }) {
                                 </div>
                             ))}
                         </div>
+                        {timeError && (
+                            <p className="mt-1 text-[11px] text-red-600" role="alert">{timeError}</p>
+                        )}
 
                         <datalist id="hh-list">
                             <option value="1"></option>
