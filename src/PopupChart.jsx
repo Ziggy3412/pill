@@ -77,7 +77,7 @@ function PopupChart({ changePopupState }) {
                             </button>
                         </div>
 
-                        {// add input fields for hours and minutes here for your homework, purely presentational UI, don't worry about click functionality yet}
+                        {/* add input fields for hours and minutes here for your homework, purely presentational UI, don't worry about click functionality yet */}
 
                         <datalist id="hh-list">
                             <option value="1"></option>
@@ -93,7 +93,6 @@ function PopupChart({ changePopupState }) {
                             <option value="11"></option>
                             <option value="12"></option>
                         </datalist>
-
 
                         <datalist id="mm-list">
                             <option value="00"></option>
