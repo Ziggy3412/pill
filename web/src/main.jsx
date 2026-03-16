@@ -8,9 +8,17 @@ import LoginPage from './pages/LoginPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+if (!googleClientId) {
+  throw new Error(
+    '[web] VITE_GOOGLE_CLIENT_ID is not set.\n' +
+    'Copy web/.env.example → web/.env, fill in your Google Client ID, then restart the dev server.'
+  );
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={googleClientId}>
       <AuthProvider>
         <BrowserRouter>
           <Routes>

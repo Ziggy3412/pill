@@ -1,4 +1,14 @@
 import 'dotenv/config';
+
+// Validate required env vars before any other module reads them
+const REQUIRED_ENV = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'JWT_SECRET'];
+const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error(`\n[backend] Missing required environment variables: ${missing.join(', ')}`);
+  console.error('[backend] Copy backend/.env.example → backend/.env and fill in the values.\n');
+  process.exit(1);
+}
+
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
