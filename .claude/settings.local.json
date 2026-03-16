@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p web)",
+      "Bash(cp -r src public index.html vite.config.js eslint.config.js package.json package-lock.json web/)",
+      "Bash(npm install:*)",
+      "Bash(timeout 10 npm run dev -- --host)",
+      "Bash(npx vite:*)",
+      "Bash(npx expo:*)",
+      "Bash(node -e \"require\\(''./node_modules/expo/package.json''\\); require\\(''./node_modules/expo-auth-session/package.json''\\); require\\(''./node_modules/expo-secure-store/package.json''\\); require\\(''./node_modules/@react-navigation/native/package.json''\\); console.log\\(''All core packages present''\\)\")",
+      "Bash(\"/c/Users/zihef/OneDrive/Desktop/coding and:*)",
+      "Bash(node -e \":*)"
+    ]
+  }
+}

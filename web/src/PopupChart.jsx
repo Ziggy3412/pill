@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { api } from './api';
 
 const HOUR_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
@@ -85,13 +86,15 @@ function TimeDropdown({ name, placeholder, options, filterOptions, value, onChan
     );
 }
 
-function PopupChart({ changePopupState }) {
+function PopupChart({ changePopupState, onSave }) {
     const [pillTimeEntries, setPillTimeEntries] = useState(0);
     const [urgency, setUrgency] = useState(0);
     const [urgencyError, setUrgencyError] = useState('');
     const [dosageError, setDosageError] = useState('');
     const [timeError, setTimeError] = useState('');
     const [timeValues, setTimeValues] = useState({});
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
 
     function getStarColor(starIndex) {
         if (starIndex <= 2) return '#22c55e'; // green
@@ -103,19 +106,23 @@ function PopupChart({ changePopupState }) {
         changePopupState(false);
     }
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
         setUrgencyError('');
         setDosageError('');
         setTimeError('');
+        setSaveError('');
 
         const form = e.target;
+        const name = form.querySelector('#person-name')?.value?.trim();
+        const medication = form.querySelector('#med-name')?.value?.trim();
         const dosage = form.elements['dosage']?.value?.trim();
-        const hasValidTime = Array.from({ length: pillTimeEntries + 1 }, (_, i) => {
+        const notes = form.querySelector('#notes')?.value?.trim();
+        const times = Array.from({ length: pillTimeEntries + 1 }, (_, i) => {
             const hour = timeValues[`time-hour-${i}`]?.trim();
             const min = timeValues[`time-min-${i}`]?.trim();
-            return hour && min;
-        }).some(Boolean);
+            return hour && min ? `${hour}:${min}` : null;
+        }).filter(Boolean);
 
         if (urgency === 0) {
             setUrgencyError('Please choose an urgency (1–5 stars) before saving.');
@@ -125,13 +132,21 @@ function PopupChart({ changePopupState }) {
             setDosageError('Dosage is required.');
             return;
         }
-        if (!hasValidTime) {
+        if (times.length === 0) {
             setTimeError('Please add at least one time (hour and minute).');
             return;
         }
 
-        // All required fields valid; close popup (add save logic here if needed)
-        changePopupState(false);
+        setSaving(true);
+        try {
+            const newPill = await api.post('/api/pills', { name, medication, dosage, urgency, times, notes });
+            onSave?.(newPill);
+            changePopupState(false);
+        } catch {
+            setSaveError('Failed to save. Please try again.');
+        } finally {
+            setSaving(false);
+        }
     }
 
     function removeTimeEntry(index) {
@@ -313,14 +328,16 @@ function PopupChart({ changePopupState }) {
 
                         <button
                             type="submit"
-                            className="inline-flex items-center justify-center rounded bg-primary px-3 py-1.5 text-[11px] font-medium text-purple-600 hover:bg-primary-dark"
+                            disabled={saving}
+                            className="inline-flex items-center justify-center rounded bg-primary px-3 py-1.5 text-[11px] font-medium text-purple-600 hover:bg-primary-dark disabled:opacity-50"
                         >
-                            Save
+                            {saving ? 'Saving…' : 'Save'}
                         </button>
                     </div>
 
-                    <p id="form-error" className="hidden md:col-span-2 text-[11px] text-red-600"></p>
-                    <p id="form-success" className="hidden md:col-span-2 text-[11px] text-emerald-700"></p>
+                    {saveError && (
+                        <p className="md:col-span-2 text-[11px] text-red-600">{saveError}</p>
+                    )}
                 </form>
             </div>
         </div>
