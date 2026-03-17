@@ -22,18 +22,23 @@ function App() {
         setPills((prev) => [...prev, newPill]);
     }
 
+    async function handleDelete(id) {
+        await api.delete(`/api/pills/${id}`);
+        setPills((prev) => prev.filter((p) => p.id !== id));
+    }
+
     return (
         <>
-            <div className="flex h-full">
+            <div className="flex h-screen overflow-hidden">
                 <SideBar currentPage={currentPage} onNavigate={setCurrentPage} />
 
-                <main className="relative flex-1">
+                <main className="relative flex-1 overflow-y-auto">
                     {currentPage === 'home' ? (
                         <div className="h-full min-h-full w-full bg-white" />
                     ) : (
                         <>
                             <AddChart changePopupState={setIsPopupOpen} />
-                            <ChartChart pills={pills} />
+                            <ChartChart pills={pills} onDelete={handleDelete} />
                         </>
                     )}
                 </main>

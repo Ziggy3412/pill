@@ -26,6 +26,8 @@ const ALLOWED_ORIGINS = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   'http://localhost:19006',
   'http://localhost:8081',
+  // Allow the ngrok tunnel origin if set
+  ...(process.env.BACKEND_URL?.startsWith('https://') ? [process.env.BACKEND_URL] : []),
 ];
 
 app.use(
@@ -89,6 +91,6 @@ app.delete('/api/pills/:id', protect, (req, res) => {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
-  console.log(`PillPal backend running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`PillPal backend listening on 0.0.0.0:${PORT} (accessible from all network interfaces)`);
 });

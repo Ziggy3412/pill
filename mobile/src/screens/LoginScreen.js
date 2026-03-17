@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -6,62 +6,50 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../context/AuthContext';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 // Allows the in-app browser to close itself after the OAuth redirect
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { loginWithToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    // Each platform needs its own OAuth 2.0 Client ID from Google Cloud Console.
-    // The web client ID is also used for Expo Go during development.
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    scopes: ['openid', 'profile', 'email'],
-  });
-
-  // React to the OAuth response once the browser closes
-  useEffect(() => {
-    if (!response) return;
-
-    if (response.type === 'success') {
-      const idToken = response.authentication?.idToken;
-      if (idToken) {
-        handleLogin(idToken);
-      } else {
-        setError('Could not retrieve ID token from Google.');
-        setLoading(false);
-      }
-    } else if (response.type === 'error') {
-      setError('Google sign-in failed. Please try again.');
-      setLoading(false);
-    } else if (response.type === 'cancel' || response.type === 'dismiss') {
-      setLoading(false);
-    }
-  }, [response]);
-
-  async function handleLogin(idToken) {
-    try {
-      setError(null);
-      await login(idToken);
-      // Navigation reacts to auth state — no explicit navigate() needed
-    } catch {
-      setError('Sign-in failed. Please try again.');
-      setLoading(false);
-    }
-  }
-
-  function handlePress() {
+  async function handlePress() {
     setLoading(true);
     setError(null);
-    promptAsync();
+
+    try {
+      // Open the backend's server-side OAuth flow in a system browser.
+      // After Google confirms, the backend issues a JWT and redirects to
+      // pillpal://auth?token=<JWT>.  WebBrowser intercepts that deep link
+      // and returns it here as result.url.
+      const result = await WebBrowser.openAuthSessionAsync(
+        `${API_URL}/auth/google/mobile`,
+        'pillpal://'
+      );
+
+      if (result.type === 'success' && result.url) {
+        const url = new URL(result.url);
+        const token = url.searchParams.get('token');
+        if (token) {
+          await loginWithToken(token);
+          // Navigation reacts to auth state — no explicit navigate() needed
+          return;
+        }
+      }
+
+      // User cancelled or no token in redirect
+      setError('Sign-in was cancelled or failed. Please try again.');
+    } catch {
+      setError('Sign-in failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -83,9 +71,8 @@ export default function LoginScreen() {
           />
         ) : (
           <TouchableOpacity
-            style={[styles.button, !request && styles.buttonDisabled]}
+            style={styles.button}
             onPress={handlePress}
-            disabled={!request}
             activeOpacity={0.85}
           >
             {/* Google "G" mark */}
@@ -163,7 +150,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  buttonDisabled: { opacity: 0.5 },
   gWrap: {
     width: 20,
     height: 20,

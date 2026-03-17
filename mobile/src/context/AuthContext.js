@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
     })();
   }, []);
 
-  // Called with the Google ID token from expo-auth-session
+  // Called with the Google ID token from expo-auth-session (legacy, kept for reference)
   async function login(idToken) {
     const res = await fetch(`${API_URL}/auth/google`, {
       method: 'POST',
@@ -62,6 +62,16 @@ export function AuthProvider({ children }) {
     await SecureStore.setItemAsync(JWT_KEY, data.token);
     setUser(data.user);
     return data.user;
+  }
+
+  // Called after server-side OAuth completes — token arrives via deep link URL
+  async function loginWithToken(token) {
+    const payload = decodeJwt(token);
+    if (!payload || isExpired(payload)) throw new Error('Invalid or expired token');
+    await SecureStore.setItemAsync(JWT_KEY, token);
+    const { iat, exp, ...userData } = payload;
+    setUser(userData);
+    return userData;
   }
 
   async function logout() {
@@ -90,7 +100,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, getToken }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, logout, getToken }}>
       {children}
     </AuthContext.Provider>
   );

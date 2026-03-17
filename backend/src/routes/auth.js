@@ -18,10 +18,14 @@ function issueJwt(user) {
 }
 
 function setTokenCookie(res, token) {
+  // When the backend is behind HTTPS (e.g. ngrok) the frontend may be on a
+  // different origin (localhost:5173). SameSite=None; Secure is required so
+  // the browser sends the cookie on cross-origin credentialed fetch requests.
+  const isHttps = (process.env.BACKEND_URL || '').startsWith('https://');
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isHttps || process.env.NODE_ENV === 'production',
+    sameSite: isHttps ? 'none' : 'lax',
     maxAge: COOKIE_MAX_AGE,
   });
 }
@@ -61,10 +65,19 @@ router.post('/google', async (req, res) => {
 
 // ── Server-side redirect flow (kept for non-SPA / mobile deep-link use) ──────
 
-// Step 1 – redirect the browser to Google's consent screen
+// Step 1a – redirect web browser to Google's consent screen
 router.get(
   '/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+// Step 1b – mobile: pass state='mobile' through the OAuth flow so the callback
+// knows to redirect to the deep link instead of the web CLIENT_URL.
+// Using state is more reliable than a session flag because the session cookie
+// can be dropped by cross-site redirects (Google → backend) in some browsers.
+router.get(
+  '/google/mobile',
+  passport.authenticate('google', { scope: ['profile', 'email'], state: 'mobile' })
 );
 
 // Step 2 – Google redirects back here with an authorization code
@@ -76,11 +89,17 @@ router.get(
   }),
   (req, res) => {
     const token = issueJwt(req.user);
-    setTokenCookie(res, token);
+    const isMobile = req.query.state === 'mobile';
 
-    // Destroy the passport session – the JWT cookie takes over from here.
+    // Destroy the passport session – the JWT cookie / deep link takes over.
     req.logout(() => {});
 
+    if (isMobile) {
+      // Redirect back into the mobile app via deep link; Expo intercepts it.
+      return res.redirect(`pillpal://auth?token=${token}`);
+    }
+
+    setTokenCookie(res, token);
     res.redirect(CLIENT_URL);
   }
 );

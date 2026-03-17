@@ -12,7 +12,10 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: '/auth/google/callback',
+      // Evaluated at request time so BACKEND_URL is always read after dotenv loads
+      get callbackURL() {
+        return `${process.env.BACKEND_URL || 'http://localhost:3000'}/auth/google/callback`;
+      },
     },
     (_accessToken, _refreshToken, profile, done) => {
       const user = {

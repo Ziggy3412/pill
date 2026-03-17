@@ -1,7 +1,38 @@
-function ChartChart({ pills = [] }) {
+function formatSchedule(pill) {
+    const s = pill.schedule;
+    if (!s) {
+        // legacy pill saved before schedule field existed
+        return Array.isArray(pill.times) ? pill.times.join(', ') : pill.times || '—';
+    }
+    const timeStr = s.times?.length ? `at ${s.times.join(', ')}` : '';
+    switch (s.frequency) {
+        case 'every_day':       return ['Every day', timeStr].filter(Boolean).join(' ');
+        case 'every_other_day': return ['Every other day', timeStr].filter(Boolean).join(' ');
+        case 'specific_days':   return [`${s.days?.join(', ') || ''}`, timeStr].filter(Boolean).join(' ');
+        case 'every_x_days':    return [`Every ${s.interval} days`, timeStr].filter(Boolean).join(' ');
+        case 'every_x_months':  return [`Every ${s.interval} months`, timeStr].filter(Boolean).join(' ');
+        case 'as_needed':       return 'As needed';
+        default:                return timeStr || '—';
+    }
+}
+
+function TrashIcon() {
     return (
-        <div className="h-full p-6 pt-16">
-            <div className="h-full rounded-xl border border-slate-200 overflow-hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+            className="w-3.5 h-3.5">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
+            <path d="M9 6V4h6v2" />
+        </svg>
+    );
+}
+
+function ChartChart({ pills = [], onDelete }) {
+    return (
+        <div className="p-6 pt-16">
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
                 <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                     <div>
                         <div className="text-sm font-semibold text-primary-dark">Pill Chart</div>
@@ -12,7 +43,7 @@ function ChartChart({ pills = [] }) {
                     </div>
                 </div>
 
-                <div className="h-[calc(100%-56px)] overflow-auto">
+                <div>
                     {pills.length === 0 ? (
                         <div className="p-10 text-center">
                             <div className="text-sm font-semibold text-slate-700">No pills yet</div>
@@ -25,9 +56,10 @@ function ChartChart({ pills = [] }) {
                                     <th className="text-left font-medium px-4 py-3">Name</th>
                                     <th className="text-left font-medium px-4 py-3">Medication</th>
                                     <th className="text-left font-medium px-4 py-3">Dosage</th>
-                                    <th className="text-left font-medium px-4 py-3">Time</th>
+                                    <th className="text-left font-medium px-4 py-3">Schedule</th>
                                     <th className="text-left font-medium px-4 py-3">Urgency</th>
                                     <th className="text-left font-medium px-4 py-3">Notes</th>
+                                    <th className="px-4 py-3" />
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -36,13 +68,21 @@ function ChartChart({ pills = [] }) {
                                         <td className="px-4 py-3 text-xs text-slate-700">{pill.name}</td>
                                         <td className="px-4 py-3 text-xs text-slate-700">{pill.medication}</td>
                                         <td className="px-4 py-3 text-xs text-slate-700">{pill.dosage}</td>
-                                        <td className="px-4 py-3 text-xs text-slate-500">
-                                            {Array.isArray(pill.times) ? pill.times.join(', ') : pill.times}
-                                        </td>
+                                        <td className="px-4 py-3 text-xs text-slate-500">{formatSchedule(pill)}</td>
                                         <td className="px-4 py-3 text-xs">
                                             <span className="font-medium">{'★'.repeat(pill.urgency)}</span>
                                         </td>
                                         <td className="px-4 py-3 text-xs text-slate-500">{pill.notes}</td>
+                                        <td className="px-4 py-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => onDelete?.(pill.id)}
+                                                className="text-slate-400 hover:text-red-500 transition-colors"
+                                                aria-label="Delete"
+                                            >
+                                                <TrashIcon />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

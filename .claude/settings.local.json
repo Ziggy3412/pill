@@ -9,7 +9,24 @@
       "Bash(npx expo:*)",
       "Bash(node -e \"require\\(''./node_modules/expo/package.json''\\); require\\(''./node_modules/expo-auth-session/package.json''\\); require\\(''./node_modules/expo-secure-store/package.json''\\); require\\(''./node_modules/@react-navigation/native/package.json''\\); console.log\\(''All core packages present''\\)\")",
       "Bash(\"/c/Users/zihef/OneDrive/Desktop/coding and:*)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(node -e \"console.log\\(''expo:'', require\\(''./node_modules/expo/package.json''\\).version\\); console.log\\(''react-native:'', require\\(''./node_modules/react-native/package.json''\\).version\\); console.log\\(''react:'', require\\(''./node_modules/react/package.json''\\).version\\);\")",
+      "Bash(powershell -Command \"netsh advfirewall firewall show rule name=''PillPal Backend Port 3000''\")",
+      "Bash(powershell -Command \"netsh advfirewall firewall add rule name=''PillPal Backend Port 3000'' protocol=TCP dir=in localport=3000 action=allow\")",
+      "Bash(ngrok version:*)",
+      "Bash(winget list:*)",
+      "Bash(where.exe ngrok:*)",
+      "Bash(winget install:*)",
+      "Bash(cmd.exe /c \"start /B ngrok http 3000 --log=stdout --log-format=json > C:/Users/zihef/AppData/Local/Temp/ngrok-pillpal.log 2>&1\")",
+      "Read(//c/Users/zihef/AppData/Local/Temp/**)",
+      "Bash(powershell -Command \"Get-Process ngrok -ErrorAction SilentlyContinue | Select-Object Id,Name,CPU\")",
+      "Bash(powershell -Command \"Start-Process -FilePath ngrok -ArgumentList ''http 3000 --log stdout --log-format json'' -RedirectStandardOutput ''C:\\\\Users\\\\zihef\\\\AppData\\\\Local\\\\Temp\\\\ngrok-pillpal.log'' -NoNewWindow\")",
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\zihef\\\\AppData\\\\Local\\\\Temp\\\\ngrok-pillpal.log'' -ErrorAction SilentlyContinue | Select -First 20\")",
+      "Bash(NGROK=\"/c/Users/zihef/AppData/Local/Microsoft/WinGet/Packages/Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe/ngrok.exe\")",
+      "Bash(\"$NGROK\" config:*)",
+      "Bash(grep -o \"\"url\"\":\"\"[^\"\"]*\"\" /c/Users/zihef/AppData/Local/Temp/ngrok-pillpal.log)",
+      "Bash(powershell -Command \"Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_IPAddress -like ''192.168.*'' -or $_IPAddress -like ''10.*''} | Select-Object IPAddress,InterfaceAlias\")",
+      "Bash(ipconfig)"
     ]
   }
 }

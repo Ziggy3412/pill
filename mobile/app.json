@@ -2,7 +2,10 @@
   "expo": {
     "name": "PillPal",
     "slug": "pillpal",
-    "scheme": "pillpal",
+    "scheme": [
+      "pillpal",
+      "com.googleusercontent.apps.640755284635-dccneuale642f0k9u55kl62mk7fdfldl"
+    ],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,6 +15,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.zihef.pillpal",
       "supportsTablet": true
     },
     "android": {
