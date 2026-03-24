@@ -16,6 +16,7 @@ import session from 'express-session';
 import passport from './config/passport.js';
 import authRouter from './routes/auth.js';
 import { protect } from './middleware/protect.js';
+import { loadPills, savePills } from './store.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,21 +72,22 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ── Protected pill routes ─────────────────────────────────────────────────────
-// In-memory store – replace with a database later
-let pills = [];
+let pills = loadPills();
 
-app.get('/api/pills', protect, (_req, res) => {
-  res.json(pills);
+app.get('/api/pills', protect, (req, res) => {
+  res.json(pills.filter((p) => p.userId === req.user.id));
 });
 
 app.post('/api/pills', protect, (req, res) => {
-  const pill = { id: Date.now(), ...req.body };
+  const pill = { id: Date.now(), userId: req.user.id, ...req.body };
   pills.push(pill);
+  savePills(pills);
   res.status(201).json(pill);
 });
 
 app.delete('/api/pills/:id', protect, (req, res) => {
-  pills = pills.filter((p) => p.id !== Number(req.params.id));
+  pills = pills.filter((p) => !(p.id === Number(req.params.id) && p.userId === req.user.id));
+  savePills(pills);
   res.status(204).send();
 });
 

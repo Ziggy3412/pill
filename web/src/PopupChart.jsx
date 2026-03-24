@@ -57,7 +57,16 @@ function TimeDropdown({ name, placeholder, options, filterOptions, value, onChan
                 type="text"
                 name={name}
                 value={value}
-                onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 2);
+                    // For hour fields: clamp to 1-12
+                    if (name.includes('hour') && digits !== '') {
+                        const n = parseInt(digits, 10);
+                        if (n > 12) return; // reject
+                        if (digits.length === 2 && n < 1) return; // reject 00
+                    }
+                    onChange(digits);
+                }}
                 onFocus={() => setIsOpen(true)}
                 onClick={() => setIsOpen(true)}
                 placeholder={placeholder}

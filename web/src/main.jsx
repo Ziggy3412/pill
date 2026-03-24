@@ -5,7 +5,6 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import './index.css';
 import App from './App.jsx';
 import LoginPage from './pages/LoginPage.jsx';
-import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -23,14 +22,7 @@ createRoot(document.getElementById('root')).render(
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <App />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/*" element={<App />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

@@ -1,11 +1,12 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 async function request(method, path, body) {
+  const token = localStorage.getItem('pillpal_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
-    // credentials: 'include' sends the httpOnly JWT cookie on every request
-    credentials: 'include',
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 

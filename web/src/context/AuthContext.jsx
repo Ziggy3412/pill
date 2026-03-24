@@ -9,34 +9,40 @@ export function AuthProvider({ children }) {
   // true while we're checking the existing session on first load
   const [loading, setLoading] = useState(true);
 
-  // On mount, ask the backend if there's already a valid JWT cookie
+  // On mount, restore from localStorage instantly — no network call needed
   useEffect(() => {
-    fetch(`${API}/auth/me`, { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setUser(data?.user ?? null))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    const token = localStorage.getItem('pillpal_token');
+    const savedUser = localStorage.getItem('pillpal_user');
+    if (token && savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem('pillpal_user');
+        localStorage.removeItem('pillpal_token');
+      }
+    }
+    setLoading(false);
   }, []);
 
-  // Called after @react-oauth/google returns a credential (Google ID token)
   async function login(credential) {
     const res = await fetch(`${API}/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // lets the browser store the httpOnly cookie
+      credentials: 'include',
       body: JSON.stringify({ credential }),
     });
     if (!res.ok) throw new Error('Login failed');
     const data = await res.json();
+    if (data.token) localStorage.setItem('pillpal_token', data.token);
+    if (data.user) localStorage.setItem('pillpal_user', JSON.stringify(data.user));
     setUser(data.user);
     return data.user;
   }
 
   async function logout() {
-    await fetch(`${API}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    localStorage.removeItem('pillpal_token');
+    localStorage.removeItem('pillpal_user');
+    await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     setUser(null);
   }
 

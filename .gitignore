@@ -25,6 +25,7 @@ mobile/node_modules/
 
 # Backend
 backend/node_modules/
+backend/data/
 
 # Web
 web/node_modules/
